@@ -256,7 +256,7 @@ async def run_tourist_agent(
 
 @click.command()
 @click.option("--scheduler-url", default="http://localhost:10000",
-              help="Scheduler A2A server URL")
+              envvar="SCHEDULER_URL", help="Scheduler A2A server URL")
 @click.option("--tourist-id", default="t1", help="Tourist ID")
 @click.option("--preferences", default="culture,history",
               help="Comma-separated list of preferences")

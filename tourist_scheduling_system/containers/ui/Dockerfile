@@ -14,8 +14,12 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install curl for healthcheck
-RUN apt-get update && apt-get install -y --no-install-recommends curl && \
+# Add Zscaler CA certificate for corporate proxy (optional - use wildcard to handle missing file)
+COPY zscaler-ca.cr[t] /usr/local/share/ca-certificates/
+
+# Install curl for healthcheck and update CA certificates
+RUN apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && \
+    update-ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast dependency installation
@@ -24,8 +28,8 @@ RUN pip install --no-cache-dir uv
 # Copy pyproject.toml first for better layer caching
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv (faster than pip)
-RUN uv pip install --system --no-cache -r pyproject.toml
+# Install dependencies using uv (--native-tls for Zscaler/corporate proxy)
+RUN uv pip install --system --no-cache --native-tls -r pyproject.toml
 
 # Create non-root user for security
 RUN adduser --disabled-password --gecos "" agentuser && \

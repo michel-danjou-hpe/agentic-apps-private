@@ -251,7 +251,7 @@ async def run_guide_agent(
 
 @click.command()
 @click.option("--scheduler-url", default="http://localhost:10000",
-              help="Scheduler A2A server URL")
+              envvar="SCHEDULER_URL", help="Scheduler A2A server URL")
 @click.option("--guide-id", default="g1", help="Guide ID")
 @click.option("--categories", default="culture,history,food",
               help="Comma-separated list of categories")

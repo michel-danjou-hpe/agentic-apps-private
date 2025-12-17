@@ -172,6 +172,18 @@ def register_tourist_request(
         Confirmation with registration details
     """
     try:
+        # Handle preferences being passed as string (LLM quirk)
+        if isinstance(preferences, str):
+            import ast
+            try:
+                preferences = json.loads(preferences)
+            except json.JSONDecodeError:
+                try:
+                    preferences = ast.literal_eval(preferences)
+                except (ValueError, SyntaxError):
+                    # Split by comma as fallback
+                    preferences = [p.strip().strip("'\"") for p in preferences.strip("[]").split(",")]
+
         # Parse availability
         window = Window(
             start=datetime.fromisoformat(availability_start),
@@ -260,6 +272,19 @@ def register_guide_offer(
         Confirmation with registration details
     """
     try:
+        # Handle categories being passed as string (LLM quirk)
+        if isinstance(categories, str):
+            # Try to parse as JSON list
+            import ast
+            try:
+                categories = json.loads(categories)
+            except json.JSONDecodeError:
+                try:
+                    categories = ast.literal_eval(categories)
+                except (ValueError, SyntaxError):
+                    # Split by comma as fallback
+                    categories = [c.strip().strip("'\"") for c in categories.strip("[]").split(",")]
+
         window = Window(
             start=datetime.fromisoformat(available_start),
             end=datetime.fromisoformat(available_end),

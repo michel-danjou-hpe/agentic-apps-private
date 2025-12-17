@@ -10,6 +10,7 @@ def create_llm_model(agent_type: str = "default"):
     Supports:
     - Azure OpenAI (provider="azure")
     - Google Gemini (provider="google" or "gemini")
+    - Ollama (provider="ollama")
 
     Args:
         agent_type: The type of agent (guide, tourist, scheduler) to look for specific env vars.
@@ -46,6 +47,27 @@ def create_llm_model(agent_type: str = "default"):
         return LiteLlm(
             model=model_name,
             api_key=api_key
+        )
+
+    elif provider == "ollama":
+        # Ollama provider - local models via Ollama
+        if not model_name:
+            model_name = os.getenv("OLLAMA_MODEL", "qwen3:latest")
+
+        # LiteLLM expects ollama_chat/ prefix for proper tool calling support
+        # Note: Using ollama/ instead of ollama_chat/ causes tool calling issues!
+        if not model_name.startswith("ollama_chat/") and not model_name.startswith("ollama/"):
+            model_name = f"ollama_chat/{model_name}"
+        elif model_name.startswith("ollama/"):
+            # Fix: change ollama/ to ollama_chat/ for tool support
+            model_name = model_name.replace("ollama/", "ollama_chat/", 1)
+
+        api_base = os.getenv("OLLAMA_HOST", "http://host.docker.internal:11434")
+
+        logger.info(f"Creating Ollama model: {model_name} at {api_base}")
+        return LiteLlm(
+            model=model_name,
+            api_base=api_base,
         )
 
     elif provider in ["azure", "openai"]:

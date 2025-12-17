@@ -28,6 +28,22 @@ services:
       context: .
       dockerfile: containers/scheduler/Dockerfile
     image: scheduler-agent:latest
+    ports:
+      - "10000:10000"
+    environment:
+      - MODEL_PROVIDER=ollama
+      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - TRANSPORT_MODE=http
+      - LITELLM_LOG=DEBUG
+      - SCHEDULER_EXTERNAL_URL=http://scheduler:10000
+      - UI_DASHBOARD_URL=http://ui:10021/api/update
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - ENABLE_TRACING=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tourist-net
 
   # UI Dashboard Agent - Real-time monitoring dashboard (A2A server)
   ui:
@@ -35,6 +51,19 @@ services:
       context: .
       dockerfile: containers/ui/Dockerfile
     image: ui-agent:latest
+    ports:
+      - "10021:10021"
+    environment:
+      - MODEL_PROVIDER=ollama
+      - OLLAMA_MODEL=qwen3:14b
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - SCHEDULER_URL=http://scheduler:10000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - scheduler
+    networks:
+      - tourist-net
 
   # Guide Agent - Client that offers tour services (Job)
   guide:
@@ -42,6 +71,22 @@ services:
       context: .
       dockerfile: containers/guide/Dockerfile
     image: guide-agent:latest
+    environment:
+      - MODEL_PROVIDER=ollama
+      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - SCHEDULER_URL=http://scheduler:10000
+      - LITELLM_LOG=DEBUG
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - ENABLE_TRACING=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["--guide-id", "g1", "--categories", "culture,history"]
+    depends_on:
+      - scheduler
+    restart: on-failure
+    networks:
+      - tourist-net
 
   # Tourist Agent - Client that requests tours (Job)
   tourist:
@@ -49,6 +94,21 @@ services:
       context: .
       dockerfile: containers/tourist/Dockerfile
     image: tourist-agent:latest
+    environment:
+      - MODEL_PROVIDER=ollama
+      - OLLAMA_MODEL=llama3.1:8b
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - SCHEDULER_URL=http://scheduler:10000
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - ENABLE_TRACING=true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["--tourist-id", "t1", "--preferences", "culture,food"]
+    depends_on:
+      - scheduler
+    restart: on-failure
+    networks:
+      - tourist-net
 
   # ==========================================================================
   # Local Infrastructure (for development/testing)

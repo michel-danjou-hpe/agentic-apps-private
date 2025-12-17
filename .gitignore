@@ -4,6 +4,9 @@ __pycache__/
 *$py.class
 ___*
 
+# Corporate proxy certificates (not needed for all users)
+zscaler-ca.crt
+
 # IDE / Editor
 .vscode/
 .idea/

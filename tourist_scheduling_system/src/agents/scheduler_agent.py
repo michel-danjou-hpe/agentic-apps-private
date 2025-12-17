@@ -265,8 +265,9 @@ def main(mode: str, port: int, host: str, transport: str, slim_endpoint: str, sl
     """Run the ADK-based scheduler agent."""
     logging.basicConfig(level=logging.INFO)
 
-    # Initialize tracing if enabled
-    if tracing and TRACING_AVAILABLE:
+    # Initialize tracing if enabled (via CLI flag or ENABLE_TRACING env var)
+    enable_tracing = tracing or os.environ.get("ENABLE_TRACING", "").lower() in ("true", "1", "yes")
+    if enable_tracing and TRACING_AVAILABLE:
         otlp_endpoint = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318")
         setup_tracing(
             service_name="scheduler-agent",
