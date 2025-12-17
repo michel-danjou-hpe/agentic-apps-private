@@ -76,7 +76,66 @@ export MODEL_PROVIDER="gemini"
 export GOOGLE_GEMINI_API_KEY="your-google-api-key"
 # Optional: Specify model (default: gemini/gemini-3-pro-preview)
 export MODEL_NAME="gemini/gemini-3-pro-preview"
+
+# Or Configure Ollama (local models)
+export MODEL_PROVIDER="ollama"
+export OLLAMA_MODEL="llama3.1:8b"
+export OLLAMA_HOST="http://localhost:11434"
 ```
+
+### Docker Builds (Optional)
+
+To build and run the agents as Docker containers:
+
+```bash
+# Build all container images
+docker compose build
+
+# Start infrastructure and agents
+docker compose up -d scheduler ui jaeger
+docker compose run --rm guide
+docker compose run --rm tourist
+```
+
+#### Corporate Proxy / Zscaler Certificate
+
+If you're behind a corporate proxy using Zscaler, you'll need to add the Zscaler root CA certificate for Docker builds to work properly. The Dockerfiles are configured to optionally use this certificate.
+
+1. **Export the Zscaler certificate** using the command line:
+   
+   **macOS**:
+   ```bash
+   # From System keychain (most common)
+   security find-certificate -c "Zscaler Root CA" -p /Library/Keychains/System.keychain > zscaler-ca.crt
+   
+   # Or from login keychain
+   security find-certificate -c "Zscaler Root CA" -p ~/Library/Keychains/login.keychain-db > zscaler-ca.crt
+   ```
+   
+   **Linux**:
+   ```bash
+   # Check /etc/ssl/certs/ or ask your IT department
+   cp /etc/ssl/certs/zscaler*.pem zscaler-ca.crt
+   ```
+   
+   **Windows** (PowerShell):
+   ```powershell
+   Get-ChildItem -Path Cert:\LocalMachine\Root | Where-Object {$_.Subject -like "*Zscaler*"} | 
+     ForEach-Object { [System.IO.File]::WriteAllText("zscaler-ca.crt", 
+       "-----BEGIN CERTIFICATE-----`n" + [Convert]::ToBase64String($_.RawData, 'InsertLineBreaks') + "`n-----END CERTIFICATE-----") }
+   ```
+
+2. **The certificate file** should be placed in the `tourist_scheduling_system/` directory:
+   ```bash
+   tourist_scheduling_system/zscaler-ca.crt
+   ```
+
+3. **Rebuild the containers** - they will automatically pick up the certificate:
+   ```bash
+   docker compose build --no-cache
+   ```
+
+> **Note**: The `zscaler-ca.crt` file is in `.gitignore` and will not be committed. If you're not behind Zscaler, the Docker builds will work without it.
 
 ### Run the Demo
 
