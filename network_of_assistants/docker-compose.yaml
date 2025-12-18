@@ -21,10 +21,9 @@ services:
     volumes:
       - ./dir:/app/ads
     environment:
-      - MODERATOR_LLM_TYPE=openai
-      - MODERATOR_LLM_MODEL=gpt-4o
-      - MODERATOR_LLM_BASE_URL
-      - MODERATOR_LLM_API_KEY
+      - MODERATOR_LLM_TYPE=ollama
+      - MODERATOR_LLM_MODEL=llama3.1:8b
+      - MODERATOR_LLM_BASE_URL=http://host.docker.internal:11434
       - SLIM_ENDPOINT=http://noa-slim:46357
       - AGENTS_DIR=/app/ads/datamodels
       - WITH_OBS=True
@@ -42,18 +41,22 @@ services:
     volumes:
       - ./noa-file-assistant/files:/home/files
     environment:
-      - ASSISTANT_LLM_TYPE=openai
-      - ASSISTANT_LLM_MODEL=gpt-4o
-      - ASSISTANT_LLM_BASE_URL
-      - ASSISTANT_LLM_API_KEY
-      - ASSISTANT_RAG_BASE_URL
-      - ASSISTANT_RAG_API_KEY
+      - ASSISTANT_LLM_TYPE=ollama
+      - ASSISTANT_LLM_MODEL=llama3.1:8b
+      - ASSISTANT_LLM_BASE_URL=http://host.docker.internal:11434
+      # RAG embeddings still need OpenAI-compatible API (or use Ollama embeddings)
+      - ASSISTANT_RAG_TYPE=ollama
+      - ASSISTANT_RAG_MODEL=nomic-embed-text
+      - ASSISTANT_RAG_BASE_URL=http://host.docker.internal:11434
       - SLIM_ENDPOINT=http://noa-slim:46357
       - ASSISTANT_ID=noa-file-assistant
       - ASSISTANT_DOC_DIR=/home/files
       - FILE_URL=https://arxiv.org/pdf/2410.10934?
       - WITH_OBS=True
       - OTLP_HTTP_ENDPOINT=http://host.docker.internal:4318
+      # SSL cert paths for Python requests behind corporate proxy
+      - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+      - SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 
   noa-web-surfer:
     build:
@@ -65,10 +68,10 @@ services:
       - noa-slim
       - noa-moderator
     environment:
-      - WEB_SURFER_LLM_TYPE=openai
-      - WEB_SURFER_LLM_MODEL=gpt-4o
-      - WEB_SURFER_LLM_BASE_URL=https://api.openai.com
-      - WEB_SURFER_LLM_API_KEY
+      # Note: MultimodalWebSurfer requires vision capabilities - llava model recommended
+      - WEB_SURFER_LLM_TYPE=ollama
+      - WEB_SURFER_LLM_MODEL=llava:7b
+      - WEB_SURFER_LLM_BASE_URL=http://host.docker.internal:11434
       - SLIM_ENDPOINT=http://noa-slim:46357
       - WEB_SURFER_ID=noa-web-surfer-assistant
       - WITH_OBS=True
@@ -84,10 +87,9 @@ services:
       - noa-slim
       - noa-moderator
     environment:
-      - MATH_ASSISTANT_LLM_TYPE=openai
-      - MATH_ASSISTANT_LLM_MODEL=gpt-4o
-      - MATH_ASSISTANT_LLM_BASE_URL
-      - MATH_ASSISTANT_LLM_API_KEY
+      - MATH_ASSISTANT_LLM_TYPE=ollama
+      - MATH_ASSISTANT_LLM_MODEL=llama3.1:8b
+      - MATH_ASSISTANT_LLM_BASE_URL=http://host.docker.internal:11434
       - SLIM_ENDPOINT=http://noa-slim:46357
       - MATH_ASSISTANT_ID=noa-math-assistant
       - WITH_OBS=True

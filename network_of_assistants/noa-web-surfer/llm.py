@@ -25,6 +25,14 @@ def load_llm(env_prefix):
     if model_config.type == "ollama":
         model = OllamaChatCompletionClient(
             model=model_config.model,
+            host=model_config.base_url,
+            model_info={
+                "json_output": True,
+                "function_calling": True,
+                "vision": True,  # llava supports vision
+                "family": "unknown",
+                "structured_output": True,
+            },
         )
     elif model_config.type == "openai":
         model = OpenAIChatCompletionClient(

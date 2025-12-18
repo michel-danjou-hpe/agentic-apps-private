@@ -18,6 +18,7 @@ from llama_index.llms.azure_openai import AzureOpenAI
 from llama_index.llms.openai_like import OpenAILike
 
 from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.embeddings.ollama import OllamaEmbedding
 from llama_index.core import Settings
 
 from slim import SLIM
@@ -106,6 +107,7 @@ async def amain(args):
     elif args.llm_type == "ollama":
         kwargs = {
             "model": args.llm_model,
+            "base_url": args.llm_base_url,
         }
         llm = Ollama(**kwargs)
     else:
@@ -117,12 +119,26 @@ async def amain(args):
             api_key=args.rag_api_key,
             api_base=args.rag_base_url,
         )
+    elif args.rag_type == "ollama":
+        embed_model = OllamaEmbedding(
+            model_name=args.rag_model,
+            base_url=args.rag_base_url,
+        )
     else:
-        raise Exception(f"RAG type {args.rag_type} is not supported. Only supported type is openai.")
+        raise Exception(f"RAG type {args.rag_type} is not supported. Supported types: openai, ollama.")
 
     Settings.embed_model = embed_model
 
     download_pdf(args.file_url, args.doc_dir)
+
+    # Check if there are any files to process
+    if not any(os.path.isfile(os.path.join(args.doc_dir, f)) for f in os.listdir(args.doc_dir)):
+        log.warning(f"No files found in {args.doc_dir}. File assistant will not be available.")
+        log.warning("To use this assistant, place PDF files in the mounted directory or fix the download.")
+        # Keep the container running but don't register with SLIM
+        import asyncio
+        while True:
+            await asyncio.sleep(3600)
 
     docs = SimpleDirectoryReader(input_dir=args.doc_dir).load_data()
     index = VectorStoreIndex.from_documents(docs, show_progress=True, streaming=False)

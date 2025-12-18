@@ -24,6 +24,7 @@ def load_llm(env_prefix):
     if model_config.type == "ollama":
         model = ChatOllama(
             model=model_config.model,
+            base_url=model_config.base_url,
             temperature=model_config.temperature,
         )
     elif model_config.type == "openai":

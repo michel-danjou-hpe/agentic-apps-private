@@ -2,6 +2,7 @@
 __pycache__
 .DS_Store
 *.pdf
+!noa-file-assistant/files/2410.10934.pdf
 .env
 .pdm-build
 auth.netrc

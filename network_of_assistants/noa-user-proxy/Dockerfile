@@ -8,6 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1
 
 COPY --from=ghcr.io/astral-sh/uv:0.5.26 /uv /bin/uv
 
+# Add Zscaler CA certificate for corporate proxy (optional - wildcard handles missing file)
+COPY zscaler-ca.cr[t] /usr/local/share/ca-certificates/
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     UV_PYTHON_DOWNLOADS=never \
@@ -29,6 +35,12 @@ RUN --mount=type=cache,target=/root/.cache/uv \
   uv sync --frozen --no-dev --no-editable --package noa-user-proxy
 
 FROM python:3.13-slim-bookworm AS runner
+
+# Add Zscaler CA certificate for corporate proxy (needed for runtime HTTPS requests)
+COPY zscaler-ca.cr[t] /usr/local/share/ca-certificates/
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN useradd -m user
 
