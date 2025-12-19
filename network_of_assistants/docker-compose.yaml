@@ -18,6 +18,7 @@ services:
       - app_network
     depends_on:
       - noa-slim
+      - otel-collector
     volumes:
       - ./dir:/app/ads
     environment:
@@ -27,7 +28,7 @@ services:
       - SLIM_ENDPOINT=http://noa-slim:46357
       - AGENTS_DIR=/app/ads/datamodels
       - WITH_OBS=True
-      - OTLP_HTTP_ENDPOINT=http://host.docker.internal:4318
+      - OTLP_HTTP_ENDPOINT=http://otel-collector:4318
 
   noa-file-assistant:
     build:
@@ -38,6 +39,7 @@ services:
     depends_on:
       - noa-slim
       - noa-moderator
+      - otel-collector
     volumes:
       - ./noa-file-assistant/files:/home/files
     environment:
@@ -53,7 +55,7 @@ services:
       - ASSISTANT_DOC_DIR=/home/files
       - FILE_URL=https://arxiv.org/pdf/2410.10934?
       - WITH_OBS=True
-      - OTLP_HTTP_ENDPOINT=http://host.docker.internal:4318
+      - OTLP_HTTP_ENDPOINT=http://otel-collector:4318
       # SSL cert paths for Python requests behind corporate proxy
       - REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
       - SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
@@ -67,6 +69,7 @@ services:
     depends_on:
       - noa-slim
       - noa-moderator
+      - otel-collector
     environment:
       # Note: MultimodalWebSurfer requires vision capabilities - llava model recommended
       - WEB_SURFER_LLM_TYPE=ollama
@@ -75,7 +78,7 @@ services:
       - SLIM_ENDPOINT=http://noa-slim:46357
       - WEB_SURFER_ID=noa-web-surfer-assistant
       - WITH_OBS=True
-      - OTLP_HTTP_ENDPOINT=http://host.docker.internal:4318
+      - OTLP_HTTP_ENDPOINT=http://otel-collector:4318
 
   noa-math-assistant:
     build:
@@ -86,6 +89,7 @@ services:
     depends_on:
       - noa-slim
       - noa-moderator
+      - otel-collector
     environment:
       - MATH_ASSISTANT_LLM_TYPE=ollama
       - MATH_ASSISTANT_LLM_MODEL=llama3.1:8b
@@ -93,7 +97,7 @@ services:
       - SLIM_ENDPOINT=http://noa-slim:46357
       - MATH_ASSISTANT_ID=noa-math-assistant
       - WITH_OBS=True
-      - OTLP_HTTP_ENDPOINT=http://host.docker.internal:4318
+      - OTLP_HTTP_ENDPOINT=http://otel-collector:4318
 
   noa-user-proxy:
     build:
@@ -113,6 +117,31 @@ services:
       - noa-file-assistant
       - noa-web-surfer
       - noa-math-assistant
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: noa-otel-collector
+    networks:
+      - app_network
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml
+    command: ["--config", "/etc/otelcol-contrib/config.yaml"]
+    depends_on:
+      - jaeger
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: noa-jaeger
+    networks:
+      - app_network
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC for OTEL
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
 
 networks:
   app_network:

@@ -61,6 +61,19 @@ Follow these steps to deploy and run your own Network of Assistants! 🌟
 
     And that's all! 🪄 Watch as NoA responds with its capabilities.
 
+## 📊 Observability with Jaeger
+
+NoA includes built-in observability with OpenTelemetry and Jaeger for distributed tracing.
+
+Once the application is running, you can access the Jaeger UI at:
+
+**http://localhost:16686**
+
+From the Jaeger UI you can:
+- View traces from all NoA services (moderator, file-assistant, math-assistant, web-surfer)
+- Analyze request latency and identify bottlenecks
+- Debug multi-agent conversations by following trace spans
+
 ## Roadmap
 
 See the [open issues](https://github.com/agntcy/network-of-assistants/issues) for a list
